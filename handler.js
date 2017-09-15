@@ -1,5 +1,7 @@
 'use strict';
 
 module.exports.main = (event, context, callback) => {
-    callback(null, { message: 'Go Serverless v1.0! Your function executed successfully!', event });
+    const file = event.Records[0].s3.object.key;
+    console.log("received", file);
+    callback(null, "OK");
 };

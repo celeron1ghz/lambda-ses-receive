@@ -1,4 +1,4 @@
-service: ses-receiver
+service: ses-mail-receiver
 
 provider:
   name: aws
@@ -30,15 +30,24 @@ functions:
   main:
     handler: handler.main
     events:
-      - s3: ses-receiver
+      - s3: camelon-inbox
 
-#resources:
-#  Resources:
-#    NewResource:
-#      Type: AWS::S3::Bucket
-#      Properties:
-#        BucketName: my-new-bucket
-#  Outputs:
-#     NewOutput:
-#       Description: "Description for the output"
-#       Value: "Some output value"
+resources:
+  Resources:
+    BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: { Ref: S3BucketCameloninbox }
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            Effect: Allow
+            Principal:
+              Service: "ses.amazonaws.com"
+            Action:
+              - s3:PutObject
+            Resource:
+              - Fn::Join: [ "", [ "arn:aws:s3:::", { Ref: S3BucketCameloninbox }, "/*" ] ]
+            Condition:
+              StringEquals:
+                "aws:Referer": { Ref: AWS::AccountId }
