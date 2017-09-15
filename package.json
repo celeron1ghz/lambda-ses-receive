@@ -1,0 +1,15 @@
+{
+  "name": "lambda-ses-receive",
+  "version": "1.0.0",
+  "description": "receive mail",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/celeron1ghz/lambda-ses-receive.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mailparser": "^2.0.5",
+    "nodemailer": "^4.1.0"
+  }
+}
