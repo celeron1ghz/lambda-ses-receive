@@ -15,8 +15,10 @@ resource "aws_ses_receipt_rule" "rule" {
 	scan_enabled  = true
 
 	recipients    = [
-        "7fes.com",
         "camelon.info",
+        "7fes.com",
+        "aquamarine-dream.info",
+        "yoshiriko.info",
     ]
 
   	s3_action {
