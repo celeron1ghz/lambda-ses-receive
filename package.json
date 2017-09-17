@@ -9,7 +9,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "aws-sdk": "^2.117.0",
+    "credstash-promise": "^2.1.2",
     "mailparser": "^2.0.5",
-    "nodemailer": "^4.1.0"
+    "nodemailer": "^4.1.0",
+    "request": "^2.81.0",
+    "request-promise": "^4.2.1",
+    "vo": "^4.0.2"
   }
 }

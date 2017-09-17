@@ -7,24 +7,29 @@ provider:
   region: us-east-1
   deploymentBucket: serverless-upload-us-east-1
   versionFunctions: false
-#  iamRoleStatements:
-#    - Effect: "Allow"
-#      Action:
-#        - "s3:ListBucket"
-#      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
-#    - Effect: "Allow"
-#      Action:
-#        - "s3:PutObject"
-#      Resource:
-#        Fn::Join:
-#          - ""
-#          - - "arn:aws:s3:::"
-#            - "Ref" : "ServerlessDeploymentBucket"
-#            - "/*"
-
-#package:
-#  exclude:
-#    - exclude-me.js
+  iamRoleStatements:
+    - Effect: Allow
+      Resource:
+        - "arn:aws:s3:::camelon-inbox/*"
+      Action:
+        - s3:GetObject
+        - s3:DeleteObject
+    - Effect: Allow
+      Resource:
+        - "arn:aws:s3:::s3-mail-sender-queue/*"
+      Action:
+        - s3:PutObject
+    - Effect: Allow
+      Resource:
+        Fn::Join: [":", [ "arn:aws:dynamodb", "ap-northeast-1", { Ref: AWS::AccountId }, "table/credential-store" ]]
+      Action:
+        - dynamodb:GetItem
+        - dynamodb:Query
+        - dynamodb:Scan
+    - Effect: Allow
+      Resource: "${s3:serverless-upload-ap-northeast-1/credstash_kms_key_arn}"
+      Action:
+        - kms:Decrypt
 
 functions:
   main:
