@@ -1,11 +1,13 @@
 'use strict';
 
+// for credstash's inner aws-sdk
 process.env.AWS_REGION = 'ap-northeast-1';
 
 const vo  = require('vo');
 const req = require('request-promise');
 const aws = require('aws-sdk');
-const s3  = new aws.S3();
+const s3  = new aws.S3({ region: 'ap-northeast-1' });
+const ses = new aws.SES({ region: 'us-east-1' });
 const cred = require('credstash-promise');
 const MailParser   = require('mailparser').simpleParser;
 const MailComposer = require('nodemailer/lib/mail-composer');
@@ -68,7 +70,7 @@ module.exports.main = (event, context, callback) => {
         console.log("TO", data.mail_address);
         console.log("ATTACHMENTS", attachments.length);
         console.log("PUT_MAIL_QUEUE", key);
-        const ret = yield s3.putObject({ Bucket: 's3-mail-sender-queue', Key: key, Body: send.toString() }).promise();
+        const ret = yield ses.sendRawEmail({ RawMessage: { Data: send.toString() } }).promise();
 
         callback(null, "OK");
     })

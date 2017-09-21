@@ -15,10 +15,9 @@ provider:
         - s3:GetObject
         - s3:DeleteObject
     - Effect: Allow
-      Resource:
-        - "arn:aws:s3:::s3-mail-sender-queue/*"
+      Resource: "*"
       Action:
-        - s3:PutObject
+        - ses:SendRawEmail
     - Effect: Allow
       Resource:
         Fn::Join: [":", [ "arn:aws:dynamodb", "ap-northeast-1", { Ref: AWS::AccountId }, "table/credential-store" ]]
