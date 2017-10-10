@@ -19,6 +19,7 @@ resource "aws_ses_receipt_rule" "rule" {
         "7fes.com",
         "aquamarine-dream.info",
         "yoshiriko.info",
+        "familiar-life.info",
     ]
 
   	s3_action {
