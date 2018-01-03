@@ -1,6 +1,5 @@
 'use strict';
 
-// for credstash's inner aws-sdk
 process.env.AWS_REGION = 'ap-northeast-1';
 
 const vo  = require('vo');
