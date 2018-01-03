@@ -25,12 +25,13 @@ SESでメールを受け取り、自分のメールアドレスに転送する�
 
 
 ## SETUP
-```
-## 必要な値をcredstashでセットしておく
-credstash -r ap-northeast-1 put -a ACCEPTESSA_ACCESS_TOKEN ...
-credstash -r ap-northeast-1 put -a SES_RECEIVER_MAIL_INFO_ENDPOINT ...
+### 環境変数の設定
+下記の値をEC2 Parameter Storeに設定する。
+ * `ACCEPTESSA_ACCESS_TOKEN`
+ * `SES_RECEIVER_MAIL_INFO_ENDPOINT`
 
-## serverlessでセットアップ
+### serverlessでセットアップ
+```
 git clone https://github.com/celeron1ghz/lambda-ses-receive.git
 cd lambda-ses-receive
 sls deploy
@@ -39,11 +40,6 @@ cd terraform
 terraform plan
 terraform apply
 ```
-
-
-## REQUIRED CREDSTASH VARIABLES
- * `ACCEPTESSA_ACCESS_TOKEN`
- * `SES_RECEIVER_MAIL_INFO_ENDPOINT`
 
 
 ## SEE ALSO

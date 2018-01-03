@@ -8,7 +8,7 @@ const req = require('request-promise');
 const aws = require('aws-sdk');
 const s3  = new aws.S3({ region: 'ap-northeast-1' });
 const ses = new aws.SES({ region: 'us-east-1' });
-const cred = require('credstash-promise');
+const ssm = new aws.SSM();
 const MailParser   = require('mailparser').simpleParser;
 const MailComposer = require('nodemailer/lib/mail-composer');
 
@@ -17,8 +17,8 @@ module.exports.main = (event, context, callback) => {
         const key = event.Records[0].s3.object.key;
         console.log("RECEIVED", key);
 
-        const token    = yield cred.fetchCred('ACCEPTESSA_ACCESS_TOKEN');
-        const endpoint = yield cred.fetchCred('SES_RECEIVER_MAIL_INFO_ENDPOINT');
+        const token    = (yield ssm.getParameter({ Name: '/acceptessa/token',    WithDecryption: true }).promise() ).Parameter.Value;
+        const endpoint = (yield ssm.getParameter({ Name: '/sesreceive/endpoint', WithDecryption: true }).promise() ).Parameter.Value;
 
         const object   = yield s3.getObject({ Bucket: 'camelon-inbox', Key: key }).promise()
         const parsed   = yield new Promise((resolve,reject) =>
@@ -34,8 +34,10 @@ module.exports.main = (event, context, callback) => {
             ? [parsed.attachments].concat(parsed.attachments)
             : [{ filename: 'attach.txt', content: object.Body }];
 
-        const from    = parsed.from.text.match(/^.*?<(\w+@\w+\.\w+)>$/)[1];
-        const to      = parsed.to.text.match(/^.*?<?(\w+@\w+\.\w+)>?$/)[1];
+        //const from    = parsed.from.text.match(/^.*?<(\w+@\w+\.\w+)>$/)[1];
+        //const to      = parsed.to.text.match(/^.*?<?(\w+@\w+\.\w+)>?$/)[1];
+        const from    = parsed.from.text;
+        const to      = parsed.to.text;
 
         console.log("MAIL_INFO_GET", endpoint);
         const address = yield req({ uri: endpoint, method: 'POST', formData: { from: from, to: to, token: token } });
@@ -45,7 +47,8 @@ module.exports.main = (event, context, callback) => {
 
         text.unshift(
             '------------------------------',
-            `To: ${parsed.to.text}`,
+            //`To: ${parsed.to.text}`,
+            `To: celeron1ghz@gmail.com`,
             `From: ${parsed.from.text}`
         );
 
@@ -58,7 +61,7 @@ module.exports.main = (event, context, callback) => {
         const built = new MailComposer({
             subject: parsed.subject,
             from:    to,
-            to:      data.mail_address
+            to:      data.mail_address,
             text:    text.join("\n"),
             attachments: attachments,
         });
