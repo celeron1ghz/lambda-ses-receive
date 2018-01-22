@@ -3,21 +3,18 @@
 process.env.AWS_REGION = 'ap-northeast-1';
 
 const vo  = require('vo');
-const req = require('request-promise');
 const aws = require('aws-sdk');
 const s3  = new aws.S3({ region: 'ap-northeast-1' });
 const ses = new aws.SES({ region: 'us-east-1' });
-const ssm = new aws.SSM({ region: 'ap-northeast-1' });
 const MailParser   = require('mailparser').simpleParser;
 const MailComposer = require('nodemailer/lib/mail-composer');
+
+const config = require('./config.js');
 
 module.exports.main = (event, context, callback) => {
     vo(function*(){
         const key = event.Records[0].s3.object.key;
         console.log("RECEIVED", key);
-
-        const token    = (yield ssm.getParameter({ Name: '/acceptessa/token',    WithDecryption: true }).promise() ).Parameter.Value;
-        const endpoint = (yield ssm.getParameter({ Name: '/sesreceive/endpoint', WithDecryption: true }).promise() ).Parameter.Value;
 
         const object   = yield s3.getObject({ Bucket: 'camelon-inbox', Key: key }).promise()
         const parsed   = yield new Promise((resolve,reject) =>
@@ -25,41 +22,40 @@ module.exports.main = (event, context, callback) => {
         );
 
         if (!parsed.text) {
-            console.log("looks like not a mail. ignore...");
+            console.log("INVALID_FORMAT_MAIL");
             return callback(null, "IGNORE");
         }
+
+        //const from    = parsed.from.text.match(/^.*?<(\w+@\w+\.\w+)>$/)[1];
+        //const to      = parsed.to.text.match(/^.*?<?(\w+@\w+\.\w+)>?$/)[1];
+        const from      = parsed.from.text;
+        const to        = parsed.to.text;
+
+        const to_domain  = to.split('@')[1];
+        const forward_to = config[to_domain];
+
+        if (!forward_to)    {
+            console.log("UNKNOWN_HOST:", to_domain);
+            return callback(null, "IGNORE");
+        }
+
+        const text = [
+            '------------------------------',
+            `To: ${parsed.to.text}`,
+            `From: ${parsed.from.text}`,
+            '------------------------------',
+            '\n',
+            parsed.text,
+        ];
 
         const attachments = parsed.attachments
             ? [parsed.attachments].concat(parsed.attachments)
             : [{ filename: 'attach.txt', content: object.Body }];
 
-        //const from    = parsed.from.text.match(/^.*?<(\w+@\w+\.\w+)>$/)[1];
-        //const to      = parsed.to.text.match(/^.*?<?(\w+@\w+\.\w+)>?$/)[1];
-        const from    = parsed.from.text;
-        const to      = parsed.to.text;
-
-        const address = yield req({ uri: endpoint, method: 'POST', formData: { from: from, to: to, token: token } });
-        const data    = JSON.parse(address);
-        const circles = data.circles.map(a => `[${a.exhibition_id}] ${a.circle_name} / ${a.penname}`).sort();
-        const text    = circles.length == 0 ? ['CIRCLE NOT FOUND'] : circles;
-        //console.log(data);
-
-        text.unshift(
-            '------------------------------',
-            `To: ${parsed.to.text}`,
-            `From: ${parsed.from.text}`
-        );
-
-        text.push(
-            '------------------------------',
-            '\n',
-            parsed.text
-        );
-
         const built = new MailComposer({
             subject: parsed.subject,
             from:    to,
-            to:      data.mail_address,
+            to:      forward_to,
             text:    text.join("\n"),
             attachments: attachments,
         });
@@ -68,7 +64,7 @@ module.exports.main = (event, context, callback) => {
             built.compile().build((err,mes) => { if (err) {reject(err)} else {resolve(mes)}  })
         );
 
-        console.log(`TO=${data.mail_address}, attachments=${attachments.length}`);
+        console.log(`${to} ==> ${forward_to} (attachments=${attachments.length})`);
         const ret = yield ses.sendRawEmail({ RawMessage: { Data: send.toString() } }).promise();
         callback(null, "OK");
     })
