@@ -7,7 +7,7 @@ const req = require('request-promise');
 const aws = require('aws-sdk');
 const s3  = new aws.S3({ region: 'ap-northeast-1' });
 const ses = new aws.SES({ region: 'us-east-1' });
-const ssm = new aws.SSM();
+const ssm = new aws.SSM({ region: 'ap-northeast-1' });
 const MailParser   = require('mailparser').simpleParser;
 const MailComposer = require('nodemailer/lib/mail-composer');
 
@@ -38,16 +38,15 @@ module.exports.main = (event, context, callback) => {
         const from    = parsed.from.text;
         const to      = parsed.to.text;
 
-        console.log("MAIL_INFO_GET", endpoint);
         const address = yield req({ uri: endpoint, method: 'POST', formData: { from: from, to: to, token: token } });
         const data    = JSON.parse(address);
         const circles = data.circles.map(a => `[${a.exhibition_id}] ${a.circle_name} / ${a.penname}`).sort();
         const text    = circles.length == 0 ? ['CIRCLE NOT FOUND'] : circles;
+        //console.log(data);
 
         text.unshift(
             '------------------------------',
-            //`To: ${parsed.to.text}`,
-            `To: celeron1ghz@gmail.com`,
+            `To: ${parsed.to.text}`,
             `From: ${parsed.from.text}`
         );
 
@@ -69,15 +68,12 @@ module.exports.main = (event, context, callback) => {
             built.compile().build((err,mes) => { if (err) {reject(err)} else {resolve(mes)}  })
         );
 
-        console.log("TO", data.mail_address);
-        console.log("ATTACHMENTS", attachments.length);
-        console.log("PUT_MAIL_QUEUE", key);
+        console.log(`TO=${data.mail_address}, attachments=${attachments.length}`);
         const ret = yield ses.sendRawEmail({ RawMessage: { Data: send.toString() } }).promise();
-
         callback(null, "OK");
     })
     .catch(err => {
-        console.log("Error happen:", err);
+        console.log("Error happen:", err.description);
         callback(err);
     });
 };
