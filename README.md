@@ -2,11 +2,8 @@
 Receive emails from SES and it forward to specified address
 
 
-## SETUP ENVIRONMENT VARIABLES
-Set these value to `EC2 Parameter Store`.
-
- * `ACCEPTESSA_ACCESS_TOKEN`
- * `SES_RECEIVER_MAIL_INFO_ENDPOINT`
+## ENVIRONMENT VARIABLES
+Nothing.
 
 
 ## SETUP SERVERLESS SCRIPT AND TERRAFORM
