@@ -1,45 +1,38 @@
 # lambda-ses-receive
-SESでメールを受け取り、自分のメールアドレスに転送する。
-
-別アプリケーションのサーバに情報を取りに行って表示するようにしているので
-不必要であればcomment inしてもよい。
+Receive emails from SES and it forward to specified address
 
 
-## PREREQUISITE
-下記の設定を設定しておくこと。
- * Route53の設定
-   * Route53でドメイン登録 or Route53へドメイン移行
-   * ドメインに対応するHoztedZoneの作成
-   * ドメインに対応するMXレコードの作成
-     * Type: `MX`
-     * Value: `10 inbound-smtp.us-east-1.amazonaws.com`
+## SETUP ENVIRONMENT VARIABLES
+Set these value to `EC2 Parameter Store`.
 
- * SESの設定
-   * ドメインの登録
-   * ドメインのVerify
-   * DKIM
-   * Notification(任意)
-
- * Terraformの設定
-   * `aws_ses_receipt_rule` の `recipients` に、自分の受け取りたいドメインを追加する
-
-
-## SETUP
-### 環境変数の設定
-下記の値をEC2 Parameter Storeに設定する。
  * `ACCEPTESSA_ACCESS_TOKEN`
  * `SES_RECEIVER_MAIL_INFO_ENDPOINT`
 
-### serverlessでセットアップ
+
+## SETUP SERVERLESS SCRIPT AND TERRAFORM
 ```
 git clone https://github.com/celeron1ghz/lambda-ses-receive.git
 cd lambda-ses-receive
+## setup like below...
 sls deploy
 
 cd terraform
 terraform plan
 terraform apply
 ```
+
+### 1. Create MX record
+`10 inbound-smtp.<region>.amazonaws.com`
+
+### 2. Create config.js for receive email address
+copy repo's `config.sample.js` into `config.js` and modify file.
+
+key is **receive domain**, value is **forward email address**.
+
+### 3. Rewrite terraform/main.tf
+**aws_ses_receipt_rule** -> **recipients**
+
+config to your domain list to receive email.
 
 
 ## SEE ALSO
