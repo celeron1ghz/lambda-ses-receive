@@ -1,5 +1,5 @@
 # lambda-ses-receive
-Receive emails from SES and it forward to specified address
+Receive emails from SES and it forward to specified email address
 
 
 ## ENVIRONMENT VARIABLES
